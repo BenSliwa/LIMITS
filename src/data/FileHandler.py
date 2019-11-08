@@ -34,7 +34,9 @@ class FileHandler:
 
 
 	def checkFolder(self, _file):
-		self.createFolder(os.path.dirname(_file))
+		folder = os.path.dirname(_file)
+		if folder:
+			self.createFolder(folder)
 		
 
 	def saveMatrix(self, _header, _data, _file):

@@ -34,7 +34,7 @@ class MSP430:
 		err = result.stderr.decode()
 		out = result.stdout.decode()
 
-		print([out, err])
+		#print([out, err])
 
 
 	def link(self, _file, _name):
@@ -54,7 +54,7 @@ class MSP430:
 		err = result.stderr.decode()
 		out = result.stdout.decode()
 
-		print([out, err])
+		#print([out, err])
 
 		return _name + ".out"
 

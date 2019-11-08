@@ -46,7 +46,9 @@ class Experiment:
 
 		R = ResultMatrix()
 		for i in range(0, len(_models)):
-			config = Configuration(self.training, _models[i], _folds)
+			model = _models[i] 
+			model.modelType = _type
+			config = Configuration(self.training, model, _folds)
 			cv = CrossValidation(config, str(i))
 			r = cv.run(csv.id, csv.id)
 			results = np.hstack([r.data.mean(0), r.data.std(0)])		# TUDO: mean only if size>1 !

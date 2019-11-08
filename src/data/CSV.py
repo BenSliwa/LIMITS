@@ -20,6 +20,9 @@ class CSV:
 		self.file = _file
 		self.id = FileHandler().generateId(_file)
 
+	def save(self, _file):
+		FileHandler().write(",".join(self.header) + "\n" + "\n".join(self.data), _file)
+
 
 	def randomize(self, _seed):
 		self.addIndices()
@@ -140,9 +143,24 @@ class CSV:
 			column.append(line.split(",")[_index])
 		return column
 
+	def getNumericColumnWithKey(self, _key):
+		index = self.header.index(_key)
+		if index>-1:
+			return np.array(self.getColumn(index)).astype("float")		
+		return np.array([]);		
+
 
 	def getNumericData(self):
-		return np.array(self.data).astype("float")
+		M = np.array([])
+		for y in range(len(self.data)):
+			x = np.array(self.data[y].split(",")).astype(np.float)
+
+			if np.prod(M.shape)==0:
+				M = x
+			else:
+				M = np.vstack([M, x])
+
+		return M
 
 
 	def findAttributes(self, _offset):

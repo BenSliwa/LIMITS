@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from weka.models.M5 import M5
 from weka.models.SVM import SVM
 from weka.models.RandomForest import RandomForest
@@ -14,18 +15,9 @@ from weka.Weka import WEKA
 from code.MSP430 import MSP430
 from code.ESP32 import ESP32
 from code.Arduino import Arduino
+from plot.ResultVisualizer import ResultVisualizer
 import numpy as np
 import argparse
-
-
-rf = RandomForest()
-rf.trees = 5
-rf.printTree = True
-rf.depth = 6
-
-# numpy, matplotlib, tkinter
-
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-c", "--classification", type=str, help='path to training data file')
@@ -35,20 +27,17 @@ parser.add_argument("-n", "--name", type=str, help='name of the result folder', 
 parser.add_argument("-gc", "--gen_code", type=int, default=0)
 parser.add_argument("-p", "--platforms", type=str, default=0, help='deployment platform')
 parser.add_argument("-cor", "--correlation", type=str, help='path to training data file')
+parser.add_argument("-vis", "--visualize", type=str, help='name of the performance indicator')
 
 args = parser.parse_args()
 
 
-
-def initModels(_args, _type): # TODO: add ML type (-> SVM  REG)
+def initModels(_args, _type): 
 	models = []
 	M = _args.models.split(",")
 	for m in M:
 		if m=="rf":
 			model = RandomForest()
-			model.trees = 5
-			model.printTree = True
-			model.depth = 6
 			models.append(model)
 		elif m=="m5":
 			model =  M5()
@@ -68,11 +57,18 @@ def initModels(_args, _type): # TODO: add ML type (-> SVM  REG)
 	
 
 
-
+def exportCode(_args, _training, _models):
+	M = _args.models.split(",")
+	for i in range(len(M)):
+		model = _models[i]
+		CodeGenerator().export(_training, model, M[i],  "results/" + _args.name + "/" + M[i] + ".cpp")
 
 def initExperiment(_args):
 	FileHandler().createFolder("results")
-	FileHandler().createFolder("results/" + args.name)
+
+	resultFolder = "results/" + args.name + "/"
+	FileHandler().createFolder(resultFolder)
+	resultFile = resultFolder + "result.csv"	
 
 	if _args.classification:
 		e = Experiment(args.classification, args.name)
@@ -80,15 +76,18 @@ def initExperiment(_args):
 		e.classification(models, 10)
 
 		if _args.gen_code:
-			M = _args.models.split(",")
-			for i in range(len(M)):
-				model = models[i]
-				CodeGenerator().export(args.classification, model, M[i],  "results/" + args.name + "/" + M[i] + ".cpp")
+			exportCode(_args, _args.classification, models)
+
+		if _args.visualize:
+			ResultVisualizer().barChart(resultFile, _args.visualize, _args.models.split(","), ylabel=_args.visualize)
 
 	elif _args.correlation:
 		csv = CSV()
 		csv.load(args.correlation)
-		csv.computeCorrelationMatrix("results/" + args.name + "/corr.csv")
+		csv.computeCorrelationMatrix(resultFile)
+
+		if _args.visualize:
+			ResultVisualizer().colorMap(resultFile)
 
 	elif _args.regression:
 		e = Experiment(args.regression, args.name)
@@ -96,14 +95,12 @@ def initExperiment(_args):
 		e.regression(models, 10)
 
 		if _args.gen_code:
-			M = _args.models.split(",")
-			for i in range(len(M)):
-				model = models[i]
-				CodeGenerator().export(args.regression, model, M[i],  "results/" + args.name + "/" + M[i] + ".cpp")
+			exportCode(_args, _args.regression, models)
 
+		if _args.visualize:
+			ResultVisualizer().barChart(resultFile, _args.visualize, _args.models.split(","), ylabel=_args.visualize)
 
-
-	print("results written to results/" + args.name)
+	print("[LIMITS]: results written to results/" + args.name)
 
 initExperiment(args)
 

@@ -1,6 +1,7 @@
 import subprocess
 import os
 from data.FileHandler import FileHandler
+from data.ResultMatrix import ResultMatrix
 from code.CodeGenerator import CodeGenerator
 from code.Compiler import Compiler
 from experiment.ConfusionMatrix import ConfusionMatrix
@@ -51,7 +52,7 @@ class CodeEvaluator:
 		return ["accuracy", "precision", "recall", "f_score"], np.array([accuracy, precision, recall, f_score]), conf
 
 
-	def regression(self, _codeFile, _attributes, _test): # att->train, 
+	def regression(self, _codeFile, _attributes, _test, _resultFile=""): # att->train, 
 		self.build(_codeFile, _attributes, "float")
 
 		L = np.array([])
@@ -65,7 +66,14 @@ class CodeEvaluator:
 		mae = self.computeMAE(L, P)
 		rmse = self.computeRMSE(L, P)
 		r2 = self.computeR2(L, P)
-		
+
+		if _resultFile:
+			raw = ResultMatrix()
+			raw.add(["label", "prediction"], L)
+			raw.add(["label", "prediction"], P)
+			raw.data = raw.data.transpose()
+			raw.save(_resultFile)
+
 		return ["r2", "mae", "rmse"], np.array([r2, mae, rmse]), ConfusionMatrix()
 
 

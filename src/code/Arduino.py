@@ -12,7 +12,10 @@ class Arduino:
 
 	def run(self, _file, _callType, _numAttributes):
 		name = _file.split("/")[-1].split(".")[0]
+
 		folder = os.path.dirname(_file) + "/" + name
+		if not "/" in name:
+			folder = "." + folder
 
 		FileHandler().createFolder(folder)
 		FileHandler().clearFolder(folder)

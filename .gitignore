@@ -2,5 +2,15 @@
 src/tmp*
 *lnk_msp*
 *_inkInfo.xml
-WEKA
+*.jar
 src/results
+src/*.eps
+src/*.png
+src/*.map
+src/*.out
+src/*.xml
+src/*.c
+src/*.cpp
+src/*.esp32
+src/*.msp430
+src/*.obj

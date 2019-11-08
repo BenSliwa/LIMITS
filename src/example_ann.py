@@ -17,3 +17,4 @@ CodeGenerator().export(training, model, "ann", "results/" + e.id + "/ann.cpp")
 # all results are written to results/example_ann/
 
 
+

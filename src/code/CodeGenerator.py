@@ -123,4 +123,5 @@ class CodeGenerator:
 		WEKA().train(_model, "tmp/train_arff.arff", "_" + _id)
 		data = "\n".join(FileHandler().read("tmp/raw_" + _id + ".txt"))
 
+		FileHandler().checkFolder(_out)
 		_model.exportCode(data, csv, attributes, _out, _training)
