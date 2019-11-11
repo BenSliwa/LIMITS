@@ -79,7 +79,8 @@ def initExperiment(_args):
 			exportCode(_args, _args.classification, models)
 
 		if _args.visualize:
-			ResultVisualizer().barChart(resultFile, _args.visualize, _args.models.split(","), ylabel=_args.visualize)
+			files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
+			ResultVisualizer().boxplots(files, _args.visualize, _args.models.split(","),  ylabel=_args.visualize)
 
 	elif _args.correlation:
 		csv = CSV()
@@ -98,9 +99,10 @@ def initExperiment(_args):
 			exportCode(_args, _args.regression, models)
 
 		if _args.visualize:
-			ResultVisualizer().barChart(resultFile, _args.visualize, _args.models.split(","), ylabel=_args.visualize)
+			files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
+			ResultVisualizer().boxplots(files, _args.visualize, _args.models.split(","),  ylabel=_args.visualize)
 
-	print("[LIMITS]: results written to results/" + args.name)
+	print("[LIMITS]: results written to src/" + resultFolder)
 
 initExperiment(args)
 

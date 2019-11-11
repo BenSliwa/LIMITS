@@ -31,13 +31,19 @@ class ANN(LearningModel):
 		""
 
 
-	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):	# IMPORTANT: _fileIn is the training data set of the current fold NOT the global training data set
+	def buildAbstractModel(self, _data, _csv, _attributes, _fileIn=""):
+		model = []
 		if not "{" in _attributes[0].type: 
 			model = self.generateRegressionModel(_data, self.hiddenLayers, _fileIn)
-			model.generateCode(_fileOut)
 		else:
 			model = self.generateClassificationModel(_data, _attributes, self.hiddenLayers, _fileIn)
-			model.generateCode(_fileOut)
+		return model
+
+
+	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):	# IMPORTANT: _fileIn is the training data set of the current fold NOT the global training data set
+		model = self.buildAbstractModel(_data, _csv, _attributes, _fileIn)
+		model.generateCode(_fileOut)
+		
 		return model
 
 

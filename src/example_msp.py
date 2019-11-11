@@ -22,7 +22,7 @@ csv = CSV()
 csv.load(training)
 attributes = csv.findAttributes(0)
 
-mem = MSP430().run(codeFile, "ml_test", "float", len(attributes)-1)
+mem = MSP430().run(codeFile, "float", len(attributes)-1)
 print(mem)
 
 # all results are written to results/example_msp/

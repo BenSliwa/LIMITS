@@ -32,3 +32,15 @@ class ResultMatrix:
 
 	def save(self, _file):
 		FileHandler().saveMatrix(self.header, self.data, _file)
+
+
+	def normalizeRows(self):
+		for i in range(len(self.data)):
+			self.data[i] = self.data[i] / np.sum(self.data[i])
+
+
+	def getColumnWithKey(self, _key):
+		index = self.header.index(_key)
+		if index>-1:
+			return self.data[:,index]
+		return np.array([])

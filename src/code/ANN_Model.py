@@ -20,8 +20,7 @@ class ANN_Model:
 
 
 	def generateCode(self, _file):
-		csv = CSV()
-		csv.load(self.training)
+		csv = CSV(self.training)
 		attributes = csv.findAttributes(0)
 		normed = self.normalize(csv, attributes)
 		resultType = "float"
@@ -242,3 +241,11 @@ class ANN_Model:
 			lastLayer = layer
 
 		eps.save(_file)
+
+
+	def computeInputLayerRanking(self):
+		W = np.abs(self.layers[0][0])
+		S = np.sum(W)
+		V = np.sum(W, axis=1) / S
+
+		return V

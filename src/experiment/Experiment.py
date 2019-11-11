@@ -11,11 +11,12 @@ class Type(Enum):
 	CLASSIFICATION = 1
 
 class Experiment:
-	def __init__(self, _training, _id="exp_0"):
+	def __init__(self, _training, _id="exp_0",  **kwargs):
 		self.training = _training
 		self.genDataSets = True
 		self.seed = 1000
 		self.id = _id
+		self.verbose = kwargs.get('verbose', True)
 
 		FileHandler().createFolder("tmp")
 		FileHandler().clearFolder("tmp")
@@ -54,9 +55,10 @@ class Experiment:
 			results = np.hstack([r.data.mean(0), r.data.std(0)])		# TUDO: mean only if size>1 !
 			R.add(r.header + [x + "_std" for x in r.header], results)
 
-			if i==0:
-				r.printHeader()
-			r.printAggregated()
+			if self.verbose:
+				if i==0:
+					r.printHeader()
+				r.printAggregated()
 
 		FileHandler().saveMatrix(R.header, R.data, "results/" + self.id + "/result.csv")
 												

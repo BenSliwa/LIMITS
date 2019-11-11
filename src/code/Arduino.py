@@ -1,14 +1,16 @@
 import subprocess
 import os
+from code.Platform import Platform
 from data.FileHandler import FileHandler
 from code.CodeGenerator import CodeGenerator
 from settings.Settings import Settings
 
 # Assumes English language setting of the IDE
 
-class Arduino:
+class Arduino(Platform):
 	def __init__(self):
-		""
+		super().__init__()
+
 
 	def run(self, _file, _callType, _numAttributes):
 		name = _file.split("/")[-1].split(".")[0]

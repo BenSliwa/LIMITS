@@ -16,8 +16,7 @@ e.regression(models, 10)
 resultFolder = "results/" + e.id + "/"
 
 # visualize
-ResultVisualizer().barChart(resultFolder+"result.csv", "r2", ['ANN', 'M5', 'Random Forest', 'SVM'], ylabel='R2', savePNG=resultFolder+'example_experimment.png')
+files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
+ResultVisualizer().boxplots(files, "r2", ["ANN", "M5", "Random Forest", "SVM"],  ylabel='R2', savePNG=resultFolder+'example_experiment.png')
 
 # all results are written to results/example_experimment/
-
-

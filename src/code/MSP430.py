@@ -1,15 +1,17 @@
 import subprocess
 import os
+from code.Platform import Platform
 from data.FileHandler import FileHandler
 from code.CodeGenerator import CodeGenerator
 from code.Compiler import Compiler
 from settings.Settings import Settings
 
-class MSP430:
+class MSP430(Platform):
 	def __init__(self):
-		""
+		super().__init__()
+		
 
-	def run(self, _file, _name, _callType, _numAttributes):
+	def run(self, _file, _callType, _numAttributes, _name="ml_test"):
 		file = _file.split(".")[0] + ".msp430"
 		code = "#include <msp430.h>\n\n" + "\n".join(FileHandler().read(_file)) + "\n\n"
 		code += "void printf(char *, ...);\n"

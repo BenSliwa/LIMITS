@@ -115,8 +115,7 @@ class CodeGenerator:
 
 
 	def export(self, _training, _model, _id, _out):
-		csv = CSV()
-		csv.load(_training)
+		csv = CSV(_training)
 		csv.convertToARFF("tmp/train_arff.arff", False)		
 		attributes = csv.findAttributes(0)
 

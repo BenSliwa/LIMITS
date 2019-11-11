@@ -17,7 +17,6 @@ class Compiler:
 			print([err])
 
 
-
 	def computeSize(self, _file):
 		cmd = "size " + _file
 		out = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode()

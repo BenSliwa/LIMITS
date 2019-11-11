@@ -1,5 +1,6 @@
 import subprocess
 import os
+from code.Platform import Platform
 from data.FileHandler import FileHandler
 from code.CodeGenerator import CodeGenerator
 from code.Compiler import Compiler
@@ -10,10 +11,10 @@ from settings.Settings import Settings
 # idf.py -p COM14 flash
 # idf.py -p COM14 monitor
 
-class ESP32:
+class ESP32(Platform):
 	def __init__(self):
-		""
-		
+		super().__init__()
+
 
 	def run(self, _file, _callType, _numAttributes):
 		code = "#include <stdio.h>\n#include <stdlib.h>\n\n"

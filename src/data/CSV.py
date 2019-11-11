@@ -6,11 +6,14 @@ from data.ARFF import ARFF, Attribute
 from data.ResultMatrix import ResultMatrix
 
 class CSV:
-	def __init__(self):
+	def __init__(self, _file=""):
 		self.header = []
 		self.data = []
 		self.id = "0"
-		self.file = ""
+		self.file = _file
+
+		if self.file:
+			self.load(self.file)
 
 
 	def load(self, _file):
@@ -19,6 +22,7 @@ class CSV:
 		self.data = self.data[1:]
 		self.file = _file
 		self.id = FileHandler().generateId(_file)
+
 
 	def save(self, _file):
 		FileHandler().write(",".join(self.header) + "\n" + "\n".join(self.data), _file)
@@ -143,6 +147,7 @@ class CSV:
 			column.append(line.split(",")[_index])
 		return column
 
+
 	def getNumericColumnWithKey(self, _key):
 		index = self.header.index(_key)
 		if index>-1:
@@ -248,13 +253,13 @@ class CSV:
 	def pearson(self, _v0, _v1):
 		return np.corrcoef(_v0, _v1)[0][1]
 
+
 	def computeCorrelationMatrix(self, _out):
 		M = ResultMatrix()
 		s = len(self.data[0].split(","));
 		for y in range(s):
 			m = [];
 			for x in range(s):
-
 				v0 = [float(i) for i in self.getColumn(x)]
 				v1 = [float(i) for i in self.getColumn(y)]
 
@@ -262,4 +267,11 @@ class CSV:
 			M.add(self.header, np.array(m))
 
 		M.save(_out)
+
+	def toMatrix(self):
+		M = ResultMatrix()
+		M.header = self.header
+		M.data = self.getNumericData()
+
+		return M
 		

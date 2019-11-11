@@ -26,6 +26,3 @@ class LearningModel(abc.ABC):
 	def parseResults(self, _data, _config, _results):
 		pass
 
-	#@abc.abstractmethod
-	#def generateCode():
-	#	pass
