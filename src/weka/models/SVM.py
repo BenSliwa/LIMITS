@@ -11,15 +11,17 @@ class SVM(LearningModel):
 	def __init__(self):		
 		super().__init__()
 		self.modelType = Type.CLASSIFICATION
+		self.C = 1.0
+
 
 	def serialize(self):
 		cmd = ""
 		if self.modelType==Type.CLASSIFICATION:
-			cmd = "weka.classifiers.functions.SMO -C 1.0 -L 0.001 -P 1.0E-12 -N 0 -V -1 -W 1"
+			cmd = "weka.classifiers.functions.SMO -C " + str(self.C) + " -L 0.001 -P 1.0E-12 -N 0 -V -1 -W 1"
 			cmd += " -K  \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 250007\""
 			cmd += " -calibrator \"weka.classifiers.functions.Logistic -R 1.0E-8 -M -1 -num-decimal-places 4\""
 		elif self.modelType==Type.REGRESSION:
-			cmd = "weka.classifiers.functions.SMOreg -C 1.0 -N 0"
+			cmd = "weka.classifiers.functions.SMOreg -C " + str(self.C) + " -N 0"
 			cmd += " -I \"weka.classifiers.functions.supportVector.RegSMOImproved -T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\""
 			cmd += " -K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 250007\""
 
@@ -81,9 +83,9 @@ class SVM(LearningModel):
 		return weights, offset
 
 
-	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):
-		code = ""
-		if not "{" in _attributes[0].type: # regression
+	def buildAbstractModel(self, _data, _csv, _attributes, _fileIn=""):
+		model = []
+		if self.modelType==Type.REGRESSION:
 			lines = self.extractLines(_data, "weights (not support vectors):", "Number of kernel evaluations:")
 			weights, offset = self.parseWeights(lines)
 
@@ -107,9 +109,27 @@ class SVM(LearningModel):
 			model.features = list(CSV().createAttributeDict(_attributes[1:]).keys())
 			model.normedValues = model.normalize(_csv, model.features)
 
+		return model
+
+
+	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):
+		code = ""
+		if self.modelType==Type.REGRESSION:
+			model = self.buildAbstractModel(_data, _csv, _attributes, _fileIn)
+
+			x = np.array(_csv.getColumn(0))
+			y = x.astype(np.float)
+			yRange = max(y)-min(y)
+			yMin = min(y)
+
+			code = model.generateRegressionCode(_attributes, yMin, yRange)
+		else: # classification
+			classes = _attributes[0].type.strip("{").strip("}").split(",")
+			model = self.buildAbstractModel(_data, _csv,_attributes, _fileIn)
 			code = model.generateClassificationCode(_attributes, classes)
 		
 		FileHandler().write(code, _fileOut)
+
 
 	def toString(self):
 		return "SVM"

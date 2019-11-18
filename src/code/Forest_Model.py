@@ -9,7 +9,8 @@ from code.CodeGenerator import CodeGenerator
 class Forest_Model:
 	def __init__(self):
 		self.trees = []
-		self.useDiscretization = False
+		self.discretization = None
+
 
 	def exportEps(self, _depth, _numX, _numY, _attributes):
 		eps = EpsDocument(2000, 2000)
@@ -55,11 +56,11 @@ class Forest_Model:
 		code += CodeGenerator().findMax("int") + "\n\n"
 
 		# majority decision
-		code += CodeGenerator().generateFunctionHeader("predict", CSV().createAttributeDict(_attributes, self.useDiscretization)) + "\n{\n"
+		code += CodeGenerator().generateFunctionHeader("predict", CSV().createAttributeDict(_attributes, self.discretization)) + "\n{\n"
 		code += "\t" + CodeGenerator().generateArray("int", "wins", ["0"] * len(_classes)) + "\n"
 
 		for i in range(0, len(self.trees)):
-			code += "\twins[" + CodeGenerator().generateFunctionCall("tree_" + str(i), CSV().createAttributeDict(_attributes[1:], self.useDiscretization)) + "]++;\n"
+			code += "\twins[" + CodeGenerator().generateFunctionCall("tree_" + str(i), CSV().createAttributeDict(_attributes[1:], self.discretization)) + "]++;\n"
 
 		code += "\tunsigned int index = findMax(wins, " + str(len(_classes)) + ");\n\n"
 		code += "\treturn classes[index];\n"
@@ -75,19 +76,22 @@ class Forest_Model:
 			code += g.generateGraphCode() + "\n\n"
 
 		# mean
-		code += CodeGenerator().generateFunctionHeader("predict", CSV().createAttributeDict(_attributes, self.useDiscretization)) + "\n{\n"
+		code += CodeGenerator().generateFunctionHeader("predict", CSV().createAttributeDict(_attributes, self.discretization)) + "\n{\n"
 
-		if self.useDiscretization:
+		if self.discretization:
 			code += "\tint sum = 0;\n"
 		else:
 			code += "\tfloat sum = 0;\n"
 
 
 		for i in range(0, len(self.trees)):
-			code += "\tsum += " + CodeGenerator().generateFunctionCall("tree_" + str(i), CSV().createAttributeDict(_attributes[1:], self.useDiscretization)) + ";\n"
+			code += "\tsum += " + CodeGenerator().generateFunctionCall("tree_" + str(i), CSV().createAttributeDict(_attributes[1:], self.discretization)) + ";\n"
 
-		if self.useDiscretization:
+		if self.discretization:
 			code += "\n\treturn sum / " + str(len(self.trees)) + ";\n"
+
+			# TODO: this would be required to undo the discretization, however we skip it here as we want a fully discretized model - it is assumed to dediscretization is done at the application level
+			#code += "\n\treturn (sum / " + str(len(self.trees)) + ") * " + str((self.discretization.widths[0])) + " + " + str((self.discretization.min[0])) + ";\n"
 		else:
 			code += "\n\treturn sum / " + str(len(self.trees)) + ".0;\n"
 		code += "}"
@@ -104,7 +108,7 @@ class Forest_Model:
 			s = float(items[1].split("\n")[0].strip("Size of the tree : "))
 
 			g = Tree_Model(str(i-1))
-			g.useDiscretization = self.useDiscretization
+			g.discretization = self.discretization
 
 			root = g.init(tree, _attributes)
 			self.trees.append(g)

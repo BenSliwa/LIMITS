@@ -11,6 +11,16 @@ class ResultVisualizer:
 		""
 
 
+	def barchart(self, _file, **kwargs):
+		M = CSV(_file).toMatrix()
+		Y = np.mean(M.data, axis=0)
+		S = np.std(M.data, axis=0)
+
+		pt = PlotTool()
+		pt.barchart(Y, S, M.header)
+		pt.finalize(kwargs)
+
+
 	def boxplots(self, _files, _key, _xTickLabels, **kwargs):
 		Y = []
 		for file in _files:
@@ -37,16 +47,16 @@ class ResultVisualizer:
 		pt.finalize(kwargs)
 
 
-
-	def scatter(self, _file, _keyX, _keyY, **kwargs):
+	def scatter(self, _files, _keyX, _keyY, **kwargs):
 		pt = PlotTool(kwargs)
+		
+		for file in _files:
+			csv = CSV(file)
+			X = csv.getNumericColumnWithKey(_keyX)
+			Y = csv.getNumericColumnWithKey(_keyY)
 
-		csv = CSV(_file)
-		X = csv.getNumericColumnWithKey(_keyX)
-		Y = csv.getNumericColumnWithKey(_keyY)
-
-		plt.scatter(X, Y, marker="*")
-		pt(kwargs)
+			plt.scatter(X, Y, marker="*", c="blue")
+		pt.finalize(kwargs)
 
 
 	def colorMap(self, _file, **kwargs):

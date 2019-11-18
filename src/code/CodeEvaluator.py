@@ -1,17 +1,21 @@
 import subprocess
 import os
+from data.CSV import CSV
 from data.FileHandler import FileHandler
 from data.ResultMatrix import ResultMatrix
 from code.CodeGenerator import CodeGenerator
 from code.Compiler import Compiler
 from experiment.ConfusionMatrix import ConfusionMatrix
+from experiment.Experiment import Type
 import numpy as np
 
 
 class CodeEvaluator:
 	def __init__(self):
-		self.tempCodeFile = "CodeEvalutor.c"
+		self.tempCodeFile = "CodeEvaluation.c"
 		self.tempExecutable = "CodeEvaluation.exe"
+		self.discretization = None
+		self.modelType = Type.CLASSIFICATION
 
 
 	def execute(self, _cmd):
@@ -20,14 +24,33 @@ class CodeEvaluator:
 			result = subprocess.check_output(_cmd, shell=True).decode("utf-8") 
 		except subprocess.CalledProcessError as e:
 			result = "invalid"
-		return result
+		return result.rstrip()
 
 
-	def build(self, _codeFile, _attributes, _callType):
-		data = "#include <stdio.h>\n#include <stdlib.h>\n\n" + "\n".join(FileHandler().read(_codeFile)) + "\n" + self.generateMain(_attributes, _callType)
-		FileHandler().write(data, self.tempCodeFile)
+	def build(self, _codeFile, _test):
+		code = "#include <stdio.h>\n#include <stdlib.h>\n#include <sstream>\n#include <iostream>\n\n" + "\n".join(FileHandler().read(_codeFile)) + "\n" 
+
+		code += "\nint main(int _argc, char* argv[])\n{\n"
+		lines = FileHandler().read(_test)
+		code += "\tstd::stringstream stream;\n"
+		for i in range(1, len(lines)):
+			line = lines[i].split(",")
+
+			code += "\tstream << "
+			code += self.buildEmbeddedPredictionCall(line[1:])
+			
+			if i<len(lines)-1:
+				code += " << \",\"" 
+			code += ";\n"
+
+		code += "\n\tstd::cout << stream.str() << std::endl;\n\n"
+		code += "\treturn 0;\n"
+		code += "}"
+
+		FileHandler().write(code, self.tempCodeFile)
 		Compiler().run(self.tempCodeFile, self.tempExecutable)
-		
+
+
 
 	def evaluate(self, _codeFile, _attributes, _test):
 		if not "{" in _attributes[0].type:
@@ -36,37 +59,101 @@ class CodeEvaluator:
 			return self.classification(_codeFile, _attributes, _test)
 
 
-	def classification(self, _codeFile, _attributes, _test): # att->train, 
-		self.build(_codeFile, _attributes, "const char*")
+	def crossValidation(self, _model, _training, _attributes, _discretization=None, **kwargs):
+		folds = kwargs.get('xlabel', 10)
+		self.discretization = _discretization
+		if _attributes[0].type=="NUMERIC":
+			self.modelType=Type.REGRESSION		
+		else:
+			self.modelType=Type.CLASSIFICATION
+			
+		R = ResultMatrix()
+		C = ConfusionMatrix(_attributes[0].type.strip("{").strip("}").split(","))
+		fileId = FileHandler().getFileName(_training).replace(".csv", "")
+		
+		for i in range(folds):
+			foldId = fileId + "_" + str(i) + ".csv"
+			training = "tmp/training_" + foldId
+			test = "tmp/test_" + foldId
+
+			# export the model code
+			codeFile = "tmp/code.cpp"
+			CodeGenerator().export(training, _model, "id", codeFile, self.discretization)
+
+			# apply the validation
+			if self.modelType==Type.REGRESSION:
+				keys, results, conf = self.regression(codeFile, _attributes, test, "tmp/predictions_" + str(i) + ".csv")
+				R.add(keys, results)
+			elif self.modelType==Type.CLASSIFICATION:
+				keys, results, conf = self.classification(codeFile, _attributes, test, "tmp/predictions_" + str(i) + ".csv")
+				R.add(keys, results)
+				C.merge(conf)
+
+		return R, C
+
+
+	def handlFunctionArguments(self, _attributes):
+		if self.discretization:
+			V = []
+			for i in range(len(_attributes)):
+				key = self.discretization.header[i+1]
+				V.append(str(self.discretization.discretize(key, float(_attributes[i]))))
+			return V
+		else:
+			return _attributes
+
+
+	def buildFunctionCall(self, _attributes):
+		return self.tempExecutable + " " + " ".join(self.handlFunctionArguments(_attributes))
+
+
+	def buildEmbeddedPredictionCall(self, _attributes):
+		V = self.handlFunctionArguments(_attributes)
+		cmd = "predict(" + ",".join(V) + ")"
+		if self.discretization and self.modelType==Type.REGRESSION:
+			cmd = "(int)" + cmd
+
+		return cmd
+
+
+	def classification(self, _codeFile, _attributes, _test, _resultFile=""): # att->train, 
+		self.modelType = Type.CLASSIFICATION
+		self.build(_codeFile, _test)
 
 		classes = _attributes[0].type.strip("{").strip("}").split(",")
-		conf = ConfusionMatrix()
-		conf.init(classes)
-		
-		lines = FileHandler().read(_test)
-		for i in range(1, len(lines)):
-			line = lines[i].split(",")
-			conf.update(self.execute(self.tempExecutable + " " + " ".join(line[1:])), line[0])
+		conf = ConfusionMatrix(classes)
+	
+		predictions = self.execute(self.tempExecutable).split(",")
+		labels = CSV(_test).getColumn(0)
+		for i in range(len(predictions)):
+			conf.update(predictions[i], labels[i])
 
 		accuracy, precision, recall, f_score = conf.calc()
 		return ["accuracy", "precision", "recall", "f_score"], np.array([accuracy, precision, recall, f_score]), conf
 
 
 	def regression(self, _codeFile, _attributes, _test, _resultFile=""): # att->train, 
-		self.build(_codeFile, _attributes, "float")
+		self.modelType = Type.REGRESSION
+		self.build(_codeFile, _test)
 
 		L = np.array([])
 		P = np.array([])
-		lines = FileHandler().read(_test)
-		for i in range(1, len(lines)):
-			line = lines[i].split(",")
-			L = np.append(L, float(line[0]))
-			P = np.append(P, float(self.execute(self.tempExecutable + " " + " ".join(line[1:]))))
+
+		predictions = self.execute(self.tempExecutable).split(",")
+		labels = CSV(_test).getColumn(0)
+		for i in range(len(predictions)):
+			prediction = float(predictions[i])
+			if self.discretization:
+				prediction = self.discretization.dediscretize(self.discretization.header[0], prediction)
+			L = np.append(L, float(labels[i]))
+			P = np.append(P, prediction)
 
 		mae = self.computeMAE(L, P)
 		rmse = self.computeRMSE(L, P)
 		r2 = self.computeR2(L, P)
 
+
+		# 
 		if _resultFile:
 			raw = ResultMatrix()
 			raw.add(["label", "prediction"], L)
@@ -75,28 +162,6 @@ class CodeEvaluator:
 			raw.save(_resultFile)
 
 		return ["r2", "mae", "rmse"], np.array([r2, mae, rmse]), ConfusionMatrix()
-
-
-	def generateMain(self, _attributes, _callType):
-		numAttributes = len(_attributes)-1
-
-		code = "\nint main(int _argc, char* argv[])\n{\n"
-		
-		code += "\t" + _callType + " r = predict("
-		for i in range(0, numAttributes):
-			code += "atof(argv[" + str(i+1) + "])"
-			if i<numAttributes-1:
-				code += ", "
-		code += ");\n"
-
-		if _callType=="const char*":
-			code += "\tprintf(r);\n"
-		else:
-			code += "\tprintf(\"%f\", r);\n"
-		code += "\treturn 0;\n"
-		code += "}"
-
-		return code
 
 
 	def computeMAE(self, _x0, _x1):

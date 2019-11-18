@@ -5,11 +5,11 @@ import numpy as np
 
 class SVM_Model:
 	def __init__(self):
-		classes = []
-		features = []
-		offsets = []
-		weights = []
-		normedValues = []
+		self.classes = []
+		self.features = []
+		self.offsets = []
+		self.weights = []
+		self.normedValues = []
 
 
 	def generateSVMCode(self):
@@ -52,6 +52,7 @@ class SVM_Model:
 
 		return code
 
+
 	def generateRegressionCode(self, _attributes, _yMin, _yRange):
 		code = ""
 
@@ -82,6 +83,7 @@ class SVM_Model:
 			w.append(str(v))
 		return w
 
+
 	def add(self, _x):
 		if _x<0:
 			return "-" + str(-_x)
@@ -105,3 +107,29 @@ class SVM_Model:
 			normedValues.append(v)
 
 		return normedValues
+
+
+	def exportWeights(self, _features, _file):
+		M = CSV()
+
+		if len(self.classes)>0:
+			M.header =  ['class0', 'class1'] + _features
+		else:
+			M.header = _features
+
+
+		for c in range(len(self.weights)):
+			W = self.weights[c]
+
+			F = [];
+			for feature in _features:
+				if feature in W:
+					F.append(W[feature])
+				else:
+					F.append(0)
+
+			if len(self.classes)>0:
+				M.data.append(','.join(self.classes[c] + [str(x) for x in F]))
+			else:
+				M.data.append(','.join([str(x) for x in F]))
+		M.save(_file)

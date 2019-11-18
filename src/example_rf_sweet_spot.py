@@ -57,10 +57,10 @@ def regressionRF(_training, _trees, _depth, _file):
 
 def plotSweetSpot(_file, _sX, _sY):
 	fig, axs = plt.subplots(2,2)
-	PlotTool().colorMap(ResultVisualizer().readAsMatrix(_file, "r2", _sX, _sY), axs[0][0], "R2")
-	PlotTool().colorMap(ResultVisualizer().readAsMatrix(_file, "msp", _sX, _sY)/1000, axs[0][1], "MSP430 Program Memory Occupation [kB]")
-	PlotTool().colorMap(ResultVisualizer().readAsMatrix(_file, "arduino", _sX, _sY)/1000, axs[1][0], "Atmega Program Memory Occupation [kB]")
-	PlotTool().colorMap(ResultVisualizer().readAsMatrix(_file, "esp", _sX, _sY)/1000, axs[1][1], "ESP32 Program Memory Occupation [kB]")
+	PlotTool({"fig":fig, "ax": axs[0][0]}).colorMap(ResultVisualizer().readAsMatrix(_file, "r2", _sX, _sY), "R2")
+	PlotTool({"fig":fig, "ax": axs[0][1]}).colorMap(ResultVisualizer().readAsMatrix(_file, "msp", _sX, _sY)/1000, "MSP430 Program Memory Occupation [kB]")
+	PlotTool({"fig":fig, "ax": axs[1][0]}).colorMap(ResultVisualizer().readAsMatrix(_file, "arduino", _sX, _sY)/1000, "Atmega Program Memory Occupation [kB]")
+	PlotTool({"fig":fig, "ax": axs[1][1]}).colorMap(ResultVisualizer().readAsMatrix(_file, "esp", _sX, _sY)/1000, "ESP32 Program Memory Occupation [kB]")
 
 	for ax in axs.flat:
 		ax.set_xticks(range(4,_sX+1,5))
@@ -74,9 +74,9 @@ def plotSweetSpot(_file, _sX, _sY):
 	fig.savefig('example_rf_sweet_spot.png', format='png')
 	plt.show()
 
-
+#
 trees = 30
 depth = 15
-resultFile = "tmp/rf_regression_mem_.csv"
+resultFile = "tmp/rf_regression_mem.csv"
 regressionRF("../examples/mnoA.csv", trees, depth, resultFile)
 plotSweetSpot(resultFile, trees, depth)

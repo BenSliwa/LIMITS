@@ -11,8 +11,11 @@ class FileHandler:
 			os.mkdir(_folder)
 		except FileExistsError:
 			""
+
+
 	def clearFolder(self, _folder):
 		""
+
 
 	def read(self, _file):
 		f = open(_file, "r")
@@ -27,6 +30,7 @@ class FileHandler:
 		f.write(_data)
 		f.close()
 
+
 	def append(self, _data, _file):
 		f = open(_file, "a")
 		f.write(_data)
@@ -37,6 +41,10 @@ class FileHandler:
 		folder = os.path.dirname(_file)
 		if folder:
 			self.createFolder(folder)
+
+
+	def getFileName(self, _path):
+		return _path.split("/")[-1]
 		
 
 	def saveMatrix(self, _header, _data, _file):

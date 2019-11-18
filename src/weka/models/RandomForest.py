@@ -37,22 +37,23 @@ class RandomForest(LearningModel):
 		_results.add(features, np.matrix([importance]))
 
 
-	def generateModel(self, _data, _attributes, _useDiscretization=False):
+	def generateModel(self, _data, _attributes, _discretization=None):
 		model = Forest_Model()
-		model.useDiscretization = _useDiscretization
+		model.discretization = _discretization
 		model.parse(_data, _attributes)
 
 		return model
 
 
-	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):
+	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):
 		code = ""
+		discretization = kwargs.get("discretization", None)
 		if not "{" in _attributes[0].type: 
-			model = self.generateModel(_data, _attributes)
+			model = self.generateModel(_data, _attributes, discretization)
 			code = model.generateRegressionCode(_attributes)
 		else:
 			classes = _attributes[0].type.strip("{").strip("}").split(",")
-			model = self.generateModel(_data, _attributes)
+			model = self.generateModel(_data, _attributes, discretization)
 			code = model.generateClassificationCode(_attributes, classes)
 		FileHandler().write(code, _fileOut)
 

@@ -48,7 +48,7 @@ class M5(LearningModel):
 		return result
 
 
-	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):
+	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):
 		code = ""
 		if not "{" in _attributes[0].type: 
 			model = self.generateGraph(_data, _attributes)

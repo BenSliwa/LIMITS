@@ -15,7 +15,7 @@ class Tree_Model:
 		self.id = _id
 		self.linearModels = []
 
-		self.useDiscretization = False
+		self.discretization = None
 
 
 	def genNodeCode(self, _node):
@@ -24,7 +24,7 @@ class Tree_Model:
 
 		if _node.isLeaf():
 			if self.labelType=="const char*":
-				result += indent + "return \"" + self.handleDiscretization(_node.result) + "\";\n"
+				result += indent + "return \"" + _node.result + "\";\n"
 			else:
 				result += indent + "return " + self.handleDiscretization(_node.result) + ";\n"
 		else:
@@ -44,13 +44,14 @@ class Tree_Model:
 
 
 	def handleDiscretization(self, _cmd):
-		if self.useDiscretization:
+		if self.discretization:
 			if " < " in _cmd:
 				cmd = _cmd.split(" < ")
-				v = round(float(cmd[1]))
+				v = self.discretization.discretize(cmd[0], float(cmd[1]))
+
 				return cmd[0] + " < " + str(v)
 			else:
-				v = round(float(_cmd))
+				v = self.discretization.discretize(self.discretization.header[0], float(_cmd))
 				return str(v)
 		return _cmd
 
@@ -86,7 +87,7 @@ class Tree_Model:
 
 
 	def init(self, _lines, _attributes):
-		self.attributes = CSV().createAttributeDict(_attributes, self.useDiscretization)
+		self.attributes = CSV().createAttributeDict(_attributes, self.discretization)
 
 		lines = _lines
 

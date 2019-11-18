@@ -40,7 +40,7 @@ class ANN(LearningModel):
 		return model
 
 
-	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn=""):	# IMPORTANT: _fileIn is the training data set of the current fold NOT the global training data set
+	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):	# IMPORTANT: _fileIn is the training data set of the current fold NOT the global training data set
 		model = self.buildAbstractModel(_data, _csv, _attributes, _fileIn)
 		model.generateCode(_fileOut)
 		

@@ -21,7 +21,7 @@ class PlotTool:
 
 		bp = self.ax.boxplot(_data, patch_artist=True, showmeans=True, sym="+", meanprops=means, flierprops=fliers, whiskerprops=whiskers)
 
-		plt.setp(bp["medians"], color="black")
+		plt.setp(bp["medians"], color="red")
 		plt.setp(bp["means"], color="black")
 		plt.setp(bp["boxes"], color="blue")
 
@@ -39,8 +39,8 @@ class PlotTool:
 
 
 	def finalize(self, kwargs={}):
-		plt.xlabel(kwargs.get('xlabel', ""))
-		plt.ylabel(kwargs.get('ylabel', ""))
+		self.ax.set_xlabel(kwargs.get('xlabel', ""))
+		self.ax.set_ylabel(kwargs.get('ylabel', ""))
 
 		self.fig.tight_layout()
 
@@ -62,12 +62,12 @@ class PlotTool:
 
 
 
-	def colorMap(self, _data, _ax, _xlabel):
+	def colorMap(self, _data, _xlabel):
 		_data = np.flipud(_data)
-		im = _ax.imshow(_data, cmap="jet")
+		im = self.ax.imshow(_data, cmap="jet")
 
-		divider = make_axes_locatable(_ax)
+		divider = make_axes_locatable(self.ax)
 		cax = divider.append_axes("right", size="5%", pad=0.05)
 		clb = plt.colorbar(im, cax=cax)
 
-		_ax.set_title(_xlabel)
+		self.ax.set_title(_xlabel)

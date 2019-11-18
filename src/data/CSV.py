@@ -4,6 +4,7 @@ import random
 from data.FileHandler import FileHandler
 from data.ARFF import ARFF, Attribute
 from data.ResultMatrix import ResultMatrix
+from data.Discretization import Discretization
 
 class CSV:
 	def __init__(self, _file=""):
@@ -26,6 +27,16 @@ class CSV:
 
 	def save(self, _file):
 		FileHandler().write(",".join(self.header) + "\n" + "\n".join(self.data), _file)
+
+
+	def removeColumnWithKey(self, _key):
+		index = self.header.index(_key)
+		if index>-1:
+			del self.header[index]
+			for i in range(len(self.data)):
+				line = self.data[i].split(",")
+				del line[index]
+				self.data[i] = ",".join(line)
 
 
 	def randomize(self, _seed):
@@ -189,7 +200,7 @@ class CSV:
 		return attributes
 
 
-	def createAttributeDict(self, _attributes, _useDiscretization=False):
+	def createAttributeDict(self, _attributes, _useDiscretization=None):
 		attributes = {}
 		for att in _attributes:
 			dataType = att.type
@@ -218,22 +229,37 @@ class CSV:
 		return classes
 
 
-	def discretize(self): # TODO: all columns
-		""
+	def discretizeData(self):
+		d = Discretization()
+		attributes = self.findAttributes(0)
+		for i in range(len(attributes)):
+			attribute = attributes[i]
+
+			d.header.append(self.header[i])
+			if attribute.type=="NUMERIC":
+				inMin, inMax, binWidth = self.discretizeColumn(i)
+				d.min.append(inMin)
+				d.max.append(inMax)
+				d.widths.append(binWidth)
+			else:
+				d.min.append(0)
+				d.max.append(0)
+				d.widths.append(0)
+
+		return d
 
 
 	def discretizeColumn(self, _index, _range=256):
-		col = self.getColumn(_index)
-		col = [float(i) for i in col]
-		col = self.discretize(col, _range)
-		col = [str(i) for i in col]
-
+		data, inMin, inMax, binWidth = self.discretize([float(i) for i in self.getColumn(_index)], _range)
+		col = [str(i) for i in data]
 
 		for i in range(0, len(self.data)):
 			line = self.data[i].split(",")
 			line[_index] = col[i];
 			self.data[i] = ",".join(line)
 			
+		return inMin, inMax, binWidth
+
 
 	def discretize(self, _data, _range=256): # _data = float array
 		inMin = min(_data)
@@ -246,8 +272,7 @@ class CSV:
 			binId = math.floor((x-inMin)/binWidth)
 			data.append(binId)
 
-		return data
-
+		return data, inMin, inMax, binWidth
 
 
 	def pearson(self, _v0, _v1):
@@ -267,6 +292,7 @@ class CSV:
 			M.add(self.header, np.array(m))
 
 		M.save(_out)
+
 
 	def toMatrix(self):
 		M = ResultMatrix()

@@ -1,9 +1,12 @@
 import numpy as np
 
 class ConfusionMatrix:
-	def __init__(self):
+	def __init__(self, _classes=[]):
 		self.classes = []
 		self.data = []
+
+		if _classes:
+			self.init(_classes)
 
 
 	def init(self, _classes):

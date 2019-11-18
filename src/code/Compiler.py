@@ -4,7 +4,7 @@ from data.FileHandler import FileHandler
 
 class Compiler:
 	def __init__(self):
-		self.cmd = "gcc "
+		self.cmd = "g++ "
 
 	def run(self, _file, _result):
 		cmd = self.cmd + _file + " -o " + _result

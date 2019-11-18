@@ -44,3 +44,17 @@ class ResultMatrix:
 		if index>-1:
 			return self.data[:,index]
 		return np.array([])
+
+
+	def sortByMean(self):
+		mean = self.data.mean(0);
+		indices = list(reversed(np.argsort(mean)))
+
+		header = []
+		for i in indices:
+			header.append(self.header[i])
+
+		self.header = header
+		self.data = self.data[:, indices]
+
+	

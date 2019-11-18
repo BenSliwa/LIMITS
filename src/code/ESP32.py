@@ -54,7 +54,7 @@ class ESP32(Platform):
 				code += ", "
 		code += ");\n"
 
-		if _callType=="const char*":
+		if _callType=="const char*" or _callType=="unsigned char":
 			code += "\tprintf(r);\n"
 		else:
 			code += "\tprintf(\"%f\", r);\n"

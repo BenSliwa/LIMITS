@@ -114,13 +114,17 @@ class CodeGenerator:
 		return code
 
 
-	def export(self, _training, _model, _id, _out):
+	def export(self, _training, _model, _id, _out, _discretize=False):
 		csv = CSV(_training)
 		csv.convertToARFF("tmp/train_arff.arff", False)		
+		d = None
+		if _discretize:
+			d = csv.discretizeData()
+
 		attributes = csv.findAttributes(0)
 
 		WEKA().train(_model, "tmp/train_arff.arff", "_" + _id)
 		data = "\n".join(FileHandler().read("tmp/raw_" + _id + ".txt"))
 
 		FileHandler().checkFolder(_out)
-		_model.exportCode(data, csv, attributes, _out, _training)
+		_model.exportCode(data, csv, attributes, _out, _training, discretization=d)
