@@ -1,4 +1,4 @@
-from experiment.Experiment import Type
+from experiment.Type import Type
 import abc
 
 class LearningModel(abc.ABC):

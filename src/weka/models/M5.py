@@ -1,14 +1,15 @@
 from weka.models.LearningModel import LearningModel
 from data.Node import Node
-from code.Tree_Model import Tree_Model
+from models.randomforest.Tree_Model import Tree_Model
 from data.FileHandler import FileHandler
 
 # https://stats.stackexchange.com/questions/228724/m5p-interpretations-and-questions
 # the code generator currently only works for the regression tree (-R), not the model tree
 
 class M5(LearningModel):
-	def __init__(self):
+	def __init__(self, _model):
 		super().__init__()
+		self.model = _model
 
 
 	def serialize(self):

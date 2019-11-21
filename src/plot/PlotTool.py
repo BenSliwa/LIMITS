@@ -62,7 +62,7 @@ class PlotTool:
 
 
 
-	def colorMap(self, _data, _xlabel):
+	def colorMap(self, _data, _title):
 		_data = np.flipud(_data)
 		im = self.ax.imshow(_data, cmap="jet")
 
@@ -70,4 +70,4 @@ class PlotTool:
 		cax = divider.append_axes("right", size="5%", pad=0.05)
 		clb = plt.colorbar(im, cax=cax)
 
-		self.ax.set_title(_xlabel)
+		self.ax.set_title(_title)

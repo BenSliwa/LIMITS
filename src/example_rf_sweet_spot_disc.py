@@ -1,6 +1,6 @@
 from plot.ResultVisualizer import ResultVisualizer
 from data.CSV import CSV
-from weka.models.RandomForest import RandomForest
+from models.randomforest.RandomForest import RandomForest
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
 from code.CodeEvaluator import CodeEvaluator
@@ -42,7 +42,7 @@ def computeMemorySize(_training, _model, _resultFolder, _discretization):
 	lAtt = len(csv.findAttributes(0))-1
 	
 	codeFile = "example_rf_sweet_spot.cpp"
-	CodeGenerator().export(_training, _model, "codeFile", codeFile, _discretization)
+	CodeGenerator().export(_training, _model, codeFile, _discretization)
 	
 	mem = []
 	platforms = [Arduino(), MSP430(), ESP32()]
@@ -50,25 +50,6 @@ def computeMemorySize(_training, _model, _resultFolder, _discretization):
 		mem.append(platform.run(codeFile, "unsigned char", lAtt))
 
 	return mem
-
-
-def crossValidation(_model, _csv, _attributes, _resultFolder, _discretization):
-	ce = CodeEvaluator()
-	ce.discretization = _discretization	
-
-	r = ResultMatrix()
-	for i in range(10):
-		codeFile = _resultFolder + "rf_disc.cpp"
-		data = "\n".join(FileHandler().read("tmp/raw0_" + str(i) + ".txt"))
-		_model.exportCode(data, _csv, _attributes, codeFile, discretization=_discretization)
-
-		keys, res, conf = ce.regression(codeFile, _csv.findAttributes(0), "tmp/test_mnoA_" + str(i) + ".csv")
-		r.add(keys, res)
-
-	results = np.hstack([r.data.mean(0), r.data.std(0)])		
-	header = r.header + [x + "_std" for x in r.header]
-
-	return header, results
 
 
 def regressionRF(_training, _trees, _depth, _file, _resultFolder, _discretization):
@@ -79,15 +60,19 @@ def regressionRF(_training, _trees, _depth, _file, _resultFolder, _discretizatio
 	for numTrees in range(1,_trees+1):
 		for depth in range(1,_depth+1):
 			rf = RandomForest()
-			rf.trees = numTrees
-			rf.depth = depth
+			rf.config.trees = numTrees
+			rf.config.depth = depth
 
 			# perform a cross validation to generate the training/test files
 			e = Experiment(_training, "example_rf_sweet_spot_disc", verbose=False)
 			e.regression([rf], 10)
 
-			#
-			header, result = crossValidation(rf, csv, attributes, resultFolder, _discretization)
+			# 
+			r,c = CodeEvaluator().crossValidation(rf, _training, attributes,  e.tmp(), _discretization)
+			result = np.hstack([r.data.mean(0), r.data.std(0)])		
+			header = r.header + [x + "_std" for x in r.header]
+
+
 			mem = computeMemorySize(_training, rf, _resultFolder, _discretization)
 			header += ["arduino", "msp", "esp"]
 			result = np.hstack([result, mem])
@@ -111,3 +96,4 @@ depth = 15
 resultFile = resultFolder + "rf_regression_mem_disc.csv"
 regressionRF(training, trees, depth, resultFile, resultFolder, d)
 plotSweetSpot(resultFile, trees, depth)
+

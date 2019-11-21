@@ -1,27 +1,24 @@
 from weka.models.LearningModel import LearningModel
-from experiment.Experiment import Type
-from code.SVM_Model import SVM_Model
+from experiment.Type import Type
+from data.FileHandler import FileHandler
 from data.CSV import CSV
 import numpy as np
-from data.FileHandler import FileHandler
-from code.CodeGenerator import CodeGenerator
 
 
 class SVM(LearningModel):
-	def __init__(self):		
+	def __init__(self, _model):
 		super().__init__()
-		self.modelType = Type.CLASSIFICATION
-		self.C = 1.0
-
+		self.model = _model
+		self.modelType = self.model.modelType
 
 	def serialize(self):
 		cmd = ""
 		if self.modelType==Type.CLASSIFICATION:
-			cmd = "weka.classifiers.functions.SMO -C " + str(self.C) + " -L 0.001 -P 1.0E-12 -N 0 -V -1 -W 1"
+			cmd = "weka.classifiers.functions.SMO -C " + str(self.model.config.C) + " -L 0.001 -P 1.0E-12 -N 0 -V -1 -W 1"
 			cmd += " -K  \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 250007\""
 			cmd += " -calibrator \"weka.classifiers.functions.Logistic -R 1.0E-8 -M -1 -num-decimal-places 4\""
 		elif self.modelType==Type.REGRESSION:
-			cmd = "weka.classifiers.functions.SMOreg -C " + str(self.C) + " -N 0"
+			cmd = "weka.classifiers.functions.SMOreg -C " + str(self.model.config.C) + " -N 0"
 			cmd += " -I \"weka.classifiers.functions.supportVector.RegSMOImproved -T 0.001 -V -P 1.0E-12 -L 0.001 -W 1\""
 			cmd += " -K \"weka.classifiers.functions.supportVector.PolyKernel -E 1.0 -C 250007\""
 
@@ -83,50 +80,46 @@ class SVM(LearningModel):
 		return weights, offset
 
 
-	def buildAbstractModel(self, _data, _csv, _attributes, _fileIn=""):
-		model = []
+	def initModel(self, _data, _csv, _attributes, _fileIn=""):
+		self.model.clear()
 		if self.modelType==Type.REGRESSION:
 			lines = self.extractLines(_data, "weights (not support vectors):", "Number of kernel evaluations:")
 			weights, offset = self.parseWeights(lines)
 
-			model = SVM_Model()
-			model.weights = [weights]
-			model.offsets = [offset]
-			model.features = list(CSV().createAttributeDict(_attributes[1:]).keys())
-			model.normedValues = model.normalize(_csv, model.features)
+			self.model.weights = [weights]
+			self.model.offsets = [offset]
+			self.model.features = list(CSV().createAttributeDict(_attributes[1:]).keys())
+			self.model.normedValues = self.model.normalize(_csv, self.model.features)
 
 			x = np.array(_csv.getColumn(0))
 			y = x.astype(np.float)
 			yRange = max(y)-min(y)
 			yMin = min(y)
 
-			code = model.generateRegressionCode(_attributes, yMin, yRange)
+			code = self.model.generateRegressionCode(_attributes, yMin, yRange)
 		else: # classification
 			classes = _attributes[0].type.strip("{").strip("}").split(",")
 
-			model = SVM_Model()
-			model.weights, model.classes, model.offsets = self.parseSVMs(_data)
-			model.features = list(CSV().createAttributeDict(_attributes[1:]).keys())
-			model.normedValues = model.normalize(_csv, model.features)
-
-		return model
+			self.model.weights, self.model.classes, self.model.offsets = self.parseSVMs(_data)
+			self.model.features = list(CSV().createAttributeDict(_attributes[1:]).keys())
+			self.model.normedValues = self.model.normalize(_csv, self.model.features)
 
 
 	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):
 		code = ""
 		if self.modelType==Type.REGRESSION:
-			model = self.buildAbstractModel(_data, _csv, _attributes, _fileIn)
+			self.initModel(_data, _csv, _attributes, _fileIn)
 
 			x = np.array(_csv.getColumn(0))
 			y = x.astype(np.float)
 			yRange = max(y)-min(y)
 			yMin = min(y)
 
-			code = model.generateRegressionCode(_attributes, yMin, yRange)
+			code = self.model.generateRegressionCode(_attributes, yMin, yRange)
 		else: # classification
 			classes = _attributes[0].type.strip("{").strip("}").split(",")
-			model = self.buildAbstractModel(_data, _csv,_attributes, _fileIn)
-			code = model.generateClassificationCode(_attributes, classes)
+			self.initModel(_data, _csv,_attributes, _fileIn)
+			code = self.model.generateClassificationCode(_attributes, classes)
 		
 		FileHandler().write(code, _fileOut)
 

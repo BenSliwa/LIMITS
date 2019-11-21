@@ -1,4 +1,4 @@
-from weka.models.M5 import M5
+from models.m5.M5 import M5
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
 from data.CSV import CSV
@@ -15,7 +15,7 @@ e.regression([model], 10)
 
 # export the raw C++ code 
 codeFile = "example_msp.cpp"
-CodeGenerator().export(training, model, "msp", codeFile)
+CodeGenerator().export(training, model, codeFile)
 
 # create a dummy MSP430 project which executes the model
 csv = CSV()

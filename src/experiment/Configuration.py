@@ -9,6 +9,7 @@ class Configuration:
 
 		self.model = _model
 		self.folds = _folds
+		self.tmpFolder = "tmp/"
 
 
 

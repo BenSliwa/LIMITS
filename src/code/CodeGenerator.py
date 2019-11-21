@@ -2,6 +2,7 @@ from data.FileHandler import FileHandler
 from data.ARFF import ARFF, Attribute
 from weka.Weka import WEKA
 from data.CSV import CSV
+import uuid 
 
 class CodeGenerator:
 	def __init__(self):
@@ -114,17 +115,27 @@ class CodeGenerator:
 		return code
 
 
-	def export(self, _training, _model, _id, _out, _discretize=False):
+	def export(self, _training, _model, _out, _discretize=False):
+		FileHandler().createFolder("tmp")
+		tmpId = "_" + str(uuid.uuid1())
+		tmpFolder = "tmp/"
+		tmpTraining = "train" + tmpId + ".arff"
+
 		csv = CSV(_training)
-		csv.convertToARFF("tmp/train_arff.arff", False)		
+		csv.convertToARFF(tmpFolder + tmpTraining, False)		
 		d = None
 		if _discretize:
 			d = csv.discretizeData()
 
 		attributes = csv.findAttributes(0)
 
-		WEKA().train(_model, "tmp/train_arff.arff", "_" + _id)
-		data = "\n".join(FileHandler().read("tmp/raw_" + _id + ".txt"))
+
+		weka = WEKA()
+		weka.folder = tmpFolder
+		weka.train(_model, tmpFolder + tmpTraining, tmpId)
+		data = "\n".join(FileHandler().read(tmpFolder + "raw" + tmpId + ".txt"))
 
 		FileHandler().checkFolder(_out)
-		_model.exportCode(data, csv, attributes, _out, _training, discretization=d)
+		weka.modelInterface.exportCode(data, csv, attributes, _out, _training, discretization=d)
+
+		FileHandler().deleteFiles([tmpFolder + tmpTraining, tmpFolder + "raw" + tmpId + ".txt"])

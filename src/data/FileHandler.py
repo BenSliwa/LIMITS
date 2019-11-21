@@ -14,8 +14,17 @@ class FileHandler:
 
 
 	def clearFolder(self, _folder):
-		""
+		for root, dirs, files in os.walk(_folder, topdown=False):
+		    for name in files:
+		        os.remove(os.path.join(root, name))
+		    for name in dirs:
+		        os.rmdir(os.path.join(root, name))
 
+
+	def deleteFiles(self, _files):
+		for file in _files:
+			os.remove(file)
+			
 
 	def read(self, _file):
 		f = open(_file, "r")

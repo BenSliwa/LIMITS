@@ -13,8 +13,8 @@ class Compiler:
 		err = result.stderr.decode()
 		out = result.stdout.decode()
 
-		if err:
-			print([err])
+		#if err:
+		#	print([err])
 
 
 	def computeSize(self, _file):

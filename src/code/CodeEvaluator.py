@@ -59,7 +59,7 @@ class CodeEvaluator:
 			return self.classification(_codeFile, _attributes, _test)
 
 
-	def crossValidation(self, _model, _training, _attributes, _discretization=None, **kwargs):
+	def crossValidation(self, _model, _training, _attributes, _folder, _discretization=None, **kwargs):
 		folds = kwargs.get('xlabel', 10)
 		self.discretization = _discretization
 		if _attributes[0].type=="NUMERIC":
@@ -73,19 +73,19 @@ class CodeEvaluator:
 		
 		for i in range(folds):
 			foldId = fileId + "_" + str(i) + ".csv"
-			training = "tmp/training_" + foldId
-			test = "tmp/test_" + foldId
+			training = _folder + "training_" + foldId
+			test = _folder + "test_" + foldId
 
 			# export the model code
-			codeFile = "tmp/code.cpp"
-			CodeGenerator().export(training, _model, "id", codeFile, self.discretization)
+			codeFile = _folder + "code.cpp"
+			CodeGenerator().export(training, _model, codeFile, self.discretization)
 
 			# apply the validation
 			if self.modelType==Type.REGRESSION:
-				keys, results, conf = self.regression(codeFile, _attributes, test, "tmp/predictions_" + str(i) + ".csv")
+				keys, results, conf = self.regression(codeFile, _attributes, test, _folder + "predictions_" + str(i) + ".csv")
 				R.add(keys, results)
 			elif self.modelType==Type.CLASSIFICATION:
-				keys, results, conf = self.classification(codeFile, _attributes, test, "tmp/predictions_" + str(i) + ".csv")
+				keys, results, conf = self.classification(codeFile, _attributes, test, _folder + "predictions_" + str(i) + ".csv")
 				R.add(keys, results)
 				C.merge(conf)
 
@@ -123,8 +123,9 @@ class CodeEvaluator:
 		classes = _attributes[0].type.strip("{").strip("}").split(",")
 		conf = ConfusionMatrix(classes)
 	
-		predictions = self.execute(self.tempExecutable).split(",")
 		labels = CSV(_test).getColumn(0)
+		predictions = self.execute(self.tempExecutable).split(",")
+		
 		for i in range(len(predictions)):
 			conf.update(predictions[i], labels[i])
 
@@ -139,8 +140,9 @@ class CodeEvaluator:
 		L = np.array([])
 		P = np.array([])
 
-		predictions = self.execute(self.tempExecutable).split(",")
 		labels = CSV(_test).getColumn(0)
+		predictions = self.execute(self.tempExecutable).split(",")
+		
 		for i in range(len(predictions)):
 			prediction = float(predictions[i])
 			if self.discretization:

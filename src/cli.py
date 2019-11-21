@@ -1,15 +1,13 @@
 #!/usr/bin/env python
-
-from weka.models.M5 import M5
-from weka.models.SVM import SVM
-from weka.models.RandomForest import RandomForest
-from weka.models.ANN import ANN
+from models.ann.ANN import ANN
+from models.m5.M5 import M5
+from models.randomforest.RandomForest import RandomForest
+from models.svm.SVM import SVM
 from experiment.CrossValidation import CrossValidation
 from experiment.Experiment import Type, Experiment
 from data.EpsDocument import EpsDocument
 from data.FileHandler import FileHandler
 from data.CSV import CSV
-from code.Forest_Model import Forest_Model
 from code.CodeGenerator import CodeGenerator
 from weka.Weka import WEKA
 from code.MSP430 import MSP430
@@ -49,19 +47,18 @@ def initModels(_args, _type):
 			model = SVM()
 			model.modelType = _type
 			models.append(model)
-
 		else:
 			print("[ERROR] Model " + m  + "not found", flush=True)
 
 	return models
 	
 
-
-def exportCode(_args, _training, _models):
+def exportCode(_args, _resultFolder, _training, _models):
 	M = _args.models.split(",")
 	for i in range(len(M)):
 		model = _models[i]
-		CodeGenerator().export(_training, model, M[i],  "results/" + _args.name + "/" + M[i] + ".cpp")
+		CodeGenerator().export(_training, model, _resultFolder + M[i] + ".cpp")
+
 
 def initExperiment(_args):
 	FileHandler().createFolder("results")
@@ -76,11 +73,12 @@ def initExperiment(_args):
 		e.classification(models, 10)
 
 		if _args.gen_code:
-			exportCode(_args, _args.classification, models)
+			exportCode(_args, resultFolder, _args.classification, models)
 
 		if _args.visualize:
-			files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
-			ResultVisualizer().boxplots(files, _args.visualize, _args.models.split(","),  ylabel=_args.visualize)
+			files = [e.path("cv_" + str(i) + ".csv") for i in range(len(models))] 
+			xTicks = [model.modelName for model in models]
+			ResultVisualizer().boxplots(files, _args.visualize, xTicks,  ylabel=_args.visualize)
 
 	elif _args.correlation:
 		csv = CSV()
@@ -96,13 +94,15 @@ def initExperiment(_args):
 		e.regression(models, 10)
 
 		if _args.gen_code:
-			exportCode(_args, _args.regression, models)
+			exportCode(_args, resultFolder, _args.regression, models)
 
 		if _args.visualize:
-			files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
-			ResultVisualizer().boxplots(files, _args.visualize, _args.models.split(","),  ylabel=_args.visualize)
+			files = [e.path("cv_" + str(i) + ".csv") for i in range(len(models))] 
+			xTicks = [model.modelName for model in models]
+			ResultVisualizer().boxplots(files, _args.visualize, xTicks,  ylabel=_args.visualize)
 
 	print("[LIMITS]: results written to src/" + resultFolder)
+
 
 initExperiment(args)
 

@@ -1,4 +1,4 @@
-from weka.models.SVM import SVM
+from models.svm.SVM import SVM
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
 
@@ -11,7 +11,7 @@ e = Experiment(training, "example_svm")
 e.classification([model], 10)
 
 # export the C++ code 
-CodeGenerator().export(training, model, "svm", "results/" + e.id + "/svm.cpp")
+CodeGenerator().export(training, model, e.path("svm.cpp"))
 
 # all results are written to results/example_svm/
 

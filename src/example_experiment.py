@@ -1,7 +1,8 @@
-from weka.models.ANN import ANN
-from weka.models.M5 import M5
-from weka.models.RandomForest import RandomForest
-from weka.models.SVM import SVM
+from models.ann.ANN import ANN
+from models.m5.M5 import M5
+from models.randomforest.RandomForest import RandomForest
+from models.svm.SVM import SVM
+
 from experiment.Experiment import Experiment
 from plot.ResultVisualizer import ResultVisualizer
 import matplotlib.pyplot as plt
@@ -15,13 +16,13 @@ e = Experiment(training, "example_experiment")
 e.regression(models, 10)
 
 # visualize
-files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))] 
+files = [e.path("cv_" + str(i) + ".csv") for i in range(len(models))] 
 fig, axs = plt.subplots(2,2)
 fig.set_size_inches(8, 5)
-xticks = ["ANN", "M5", "Random Forest", "SVM"]
+xticks = [model.modelName for model in models]
 ResultVisualizer().boxplots(files, "r2", xticks,  ylabel='R2', fig=fig, ax=axs[0][0], show=False)
 ResultVisualizer().boxplots(files, "mae", xticks,  ylabel='MAE [MBit/s]', fig=fig, ax=axs[0][1], show=False)
 ResultVisualizer().boxplots(files, "rmse", xticks,  ylabel='RMSE [MBit/s]', fig=fig, ax=axs[1][0], show=False)
-ResultVisualizer().boxplots(files, "training", xticks,  ylabel='Training Time [s]', fig=fig, ax=axs[1][1], savePNG="results/" + e.id + "/"+'example_experiment.png')
+ResultVisualizer().boxplots(files, "training", xticks,  ylabel='Training Time [s]', fig=fig, ax=axs[1][1], savePNG=e.path("example_experiment.png"))
 
 # all results are written to results/example_experimment/

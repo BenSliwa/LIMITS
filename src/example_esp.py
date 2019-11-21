@@ -1,4 +1,4 @@
-from weka.models.M5 import M5
+from models.m5.M5 import M5
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
 from data.CSV import CSV
@@ -13,8 +13,8 @@ e = Experiment(training, "example_esp")
 e.regression([model], 10)
 
 # export the raw C++ code 
-codeFile = "results/" + e.id + "/esp.cpp"
-CodeGenerator().export(training, model, "esp", codeFile)
+codeFile = e.path("esp.cpp")
+CodeGenerator().export(training, model, codeFile)
 
 # create a dummy ESP32 project which executes the model
 csv = CSV()

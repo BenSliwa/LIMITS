@@ -14,9 +14,9 @@ class Arduino(Platform):
 
 	def run(self, _file, _callType, _numAttributes):
 		name = _file.split("/")[-1].split(".")[0]
-
-		folder = os.path.dirname(_file) + "/" + name
-		if not "/" in name:
+		directory = os.path.dirname(_file)
+		folder = directory + "/" + name
+		if not directory:
 			folder = "." + folder
 
 		FileHandler().createFolder(folder)
@@ -44,9 +44,6 @@ class Arduino(Platform):
 
 		err = result.stderr.decode()
 		out = result.stdout.decode()
-
-
-		FileHandler().write(out, "tmp/arduino.txt")
 
 		mem = -1
 		if "Sketch uses " in out:

@@ -1,4 +1,4 @@
-from weka.models.ANN import ANN
+from models.ann.ANN import ANN
 from code.CodeGenerator import CodeGenerator
 from code.MSP430 import MSP430
 from code.ESP32 import ESP32
@@ -19,7 +19,7 @@ def computeMemorySize(_training, _model, _regression):
 	lAtt = len(csv.findAttributes(0))-1
 	
 	codeFile = "example_ann_sweet_spot.cpp"
-	CodeGenerator().export(_training, _model, "codeFile", codeFile)
+	CodeGenerator().export(_training, _model, codeFile)
 	
 	if _regression==True:
 		resultType = "float"
@@ -41,9 +41,9 @@ def classificationANN(_training, _layers, _nodes, _file):
 	for numLayers in range(1, _layers+1):
 		for numNodes in range(1, _nodes+1):
 			ann = ANN()
-			ann.hiddenLayers = []
+			ann.config.hiddenLayers = []
 			for i in range(numLayers):
-				ann.hiddenLayers.append(numNodes)
+				ann.config.hiddenLayers.append(numNodes)
 
 			header, result = e.classification([ann], 10)
 			mem = computeMemorySize(_training, ann, False)
@@ -64,7 +64,7 @@ def plot(_data, _ax, _title, _xMax):
 		_ax.set(xlabel='#Nodes on Hidden Layer', ylabel='Program Memory\n Occupation [kB]')
 
 
-def plotSweetSpot(_file, _layers, _nodes):
+def plotSweetSpot(_example, _file, _layers, _nodes):
 	csv = CSV(_file)
 
 	fig, axs = plt.subplots(2,2)
@@ -86,14 +86,15 @@ def plotSweetSpot(_file, _layers, _nodes):
 
 	fig.tight_layout()
 	fig.set_size_inches(8, 5)
-	fig.savefig('example_ann_sweet_spot.png', format='png')
+	fig.savefig(_example.path("example_ann_sweet_spot.png"), format="png")
 
 	plt.show()
 
 
+e = Experiment("", "example_ann_sweet_spot")
 layers = 3
 nodes = 26
 
-resultFile = "tmp/ann_classification_mem.csv"
+resultFile = e.path("ann_classification_mem.csv")
 classificationANN("../examples/vehicleClassification.csv", layers, nodes, resultFile)
 plotSweetSpot(resultFile, layers, nodes)

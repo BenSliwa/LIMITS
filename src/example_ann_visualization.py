@@ -1,7 +1,6 @@
-from weka.models.ANN import ANN
+from models.ann.ANN import ANN
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
-from code.ANN_Model import ANN_Model
 from data.FileHandler import FileHandler
 from data.CSV import CSV
 
@@ -11,22 +10,9 @@ model = ANN()
 model.hiddenLayers = [10, 10]
 
 # perform a 10-fold cross validation
-e = Experiment(training, "example_ann")
+e = Experiment(training, "example_ann_visualization")
 e.regression([model], 10)
 
 # export the C++ code 
-CodeGenerator().export(training, model, "ann", "results/" + e.id + "/ann.cpp")
-
-# all results are written to results/example_ann/
-
-
-
-
-csv = CSV()
-csv.load(training)
-
-data = "\n".join(FileHandler().read("tmp/raw0_0.txt"))
-annModel = model.generateClassificationModel(data, csv.findAttributes(0), model.hiddenLayers, training)
-
-# save a model visulization
-annModel.exportEps('ann_vis.eps')
+CodeGenerator().export(training, model, e.path("ann.cpp"))
+model.exportEps(e.path("ann_vis.eps"))

@@ -1,101 +1,66 @@
 from weka.models.LearningModel import LearningModel
+from models.ann.Node import Node
+from experiment.Type import Type
 from data.FileHandler import FileHandler
-from code.ANN_Model import ANN_Model
 from data.CSV import CSV
 import numpy as np
-from experiment.Experiment import Type
-
-class ANN_Node:
-	def __init__(self):
-		self.threshold = 0
-		self.weights = []
-
 
 class ANN(LearningModel):
-	def __init__(self):
+	def __init__(self, _model):
 		super().__init__()
-		self.learningRate = 0.3;
-		self.momentum = 0.2;
-		self.epochs = 500;
-		self.hiddenLayers = [10, 10]
+		self.model = _model
 
 
 	def serialize(self):
 		cmd = "weka.classifiers.functions.MultilayerPerceptron" 
-		cmd += " -L " + str(self.learningRate) + " -M " + str(self.momentum) + " -N " + str(self.epochs) + " -V 0 -S 0 -E 20"
-		cmd += " -H " + ",".join(map(str, self.hiddenLayers))
-		#cmd += " -H " + str(self.hiddenLayers)
+		cmd += " -L " + str(self.model.config.learningRate) + " -M " + str(self.model.config.momentum) + " -N " + str(self.model.config.epochs) + " -V 0 -S 0 -E 20"
+		cmd += " -H " + ",".join(map(str, self.model.config.hiddenLayers))
+
 		return cmd
+
 
 	def parseResults(self, _data, _config, _results):
 		""
 
 
-	def buildAbstractModel(self, _data, _csv, _attributes, _fileIn=""):
-		model = []
+	def initModel(self, _data, _csv, _attributes, _fileIn=""):
+		self.model.clear()
+
+		N = []
+		O = []
+		L = []
+		csv = CSV()
+		csv.load(_fileIn)
+		self.model.inputLayerKeys = csv.header[1:]
+		self.model.training = _fileIn
+
 		if not "{" in _attributes[0].type: 
-			model = self.generateRegressionModel(_data, self.hiddenLayers, _fileIn)
+			N, O = self.parseNodes(_data, 1)
+			L = self.parseLayers(self.model.config.hiddenLayers, N, O)
+			self.model.modelType = Type.REGRESSION		
+			self.model.outputLayerKeys.append(csv.header[0])	
 		else:
-			model = self.generateClassificationModel(_data, _attributes, self.hiddenLayers, _fileIn)
-		return model
+			classes = self.extractClasses(_attributes)
+			N, O = self.parseNodes(_data, len(classes))
+			L = self.parseLayers(self.model.config.hiddenLayers, N, O)
+			self.model.modelType = Type.CLASSIFICATION
+			self.model.outputLayerKeys = classes
+
+		for i in range(len(L)):
+			W, T = self.generateWeightMatrix(L[i])
+			self.model.weights.append(W)
+			self.model.thresholds.append(T)
+
+		W, T = self.generateWeightMatrix(O)
+		self.model.weights.append(W)
+		self.model.thresholds.append(T)
+		self.model.L = L
 
 
 	def exportCode(self, _data, _csv, _attributes, _fileOut, _fileIn="", **kwargs):	# IMPORTANT: _fileIn is the training data set of the current fold NOT the global training data set
-		model = self.buildAbstractModel(_data, _csv, _attributes, _fileIn)
-		model.generateCode(_fileOut)
+		self.initModel(_data, _csv, _attributes, _fileIn)
+		self.model.generateCode(_fileOut)
 		
-		return model
-
-
-	def generateClassificationModel(self, _data, _attributes, _layers, _training):
-		# determine the mapping of output nodes to classes (the first N nodes correspond to the resulting classes)
-		classes = self.extractClasses(_attributes)
-
-		N, O = self.parseNodes(_data, len(classes))
-		L = self.parseLayers(_layers, N, O)
-
-		matrices = [];
-		for i in range(0, len(L)):
-			matrices.append(self.generateWeightMatrix(L[i]))
-		matrices.append(self.generateWeightMatrix(O))
-
-		model = ANN_Model()
-		model.modelType = Type.CLASSIFICATION
-		model.layers = matrices
-		model.L = L
-
-		csv = CSV()
-		csv.load(_training)
-		model.inputLayer = csv.header[1:]
-		model.training = _training
-		model.outputLayer = classes
-
-		return model
-
-
-	def generateRegressionModel(self, _data, _layers, _training):
-		N, O = self.parseNodes(_data, 1)
-		L = self.parseLayers(_layers, N, O)
-
-		# generate the weight and threshold matrices
-		matrices = [];
-		for i in range(0, len(L)):
-			matrices.append(self.generateWeightMatrix(L[i]))
-		matrices.append(self.generateWeightMatrix(O))
-
-		model = ANN_Model()
-		model.modelType = Type.REGRESSION
-		model.layers = matrices
-		model.L = L
-
-		csv = CSV()
-		csv.load(_training)
-		model.inputLayer = csv.header[1:]
-		model.training = _training
-		model.outputLayer.append(csv.header[0])	
-
-		return model
-
 
 	def parseNodes(self, _data, _numOut):
 		lines = self.extractLines(_data, "=== Classifier model (full training set) ===", "Time taken to build model")
@@ -120,10 +85,9 @@ class ANN(LearningModel):
 		nodes = nodes[_numOut:]
 
 		return nodes, out
-
-
+		
 	def parseNode(self, _data):
-		node = ANN_Node()
+		node = Node()
 
 		lines = _data.split("\n")
 		for line in lines:

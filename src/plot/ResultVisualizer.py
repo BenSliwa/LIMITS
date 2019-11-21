@@ -59,21 +59,52 @@ class ResultVisualizer:
 		pt.finalize(kwargs)
 
 
+	def colormaps(self, _rows, _columns, _files, _titles, **kwargs):
+		fig, axs = plt.subplots(_rows, _columns)
+		args = kwargs
+		args["fig"] = fig
+
+		for row in range(_rows):
+			for col in range(_columns):
+				index = row * _columns + col
+				if index<len(_files):
+					args["show"] = False
+					if index==len(_files)-1:
+						args["show"]  = True
+
+					if _rows==1 or _columns==1:
+						c = index
+					else:
+						c = row,col
+					args["ax"] = ax=axs[c]
+					args["title"] = _titles[index]
+					
+					self.colorMap(_files[index], **args)
+
+
 	def colorMap(self, _file, **kwargs):
 		csv = CSV(_file)
 		M = csv.getNumericData()
+		center = (np.min(M)+np.max(M))/2
+
 
 		pt = PlotTool(kwargs)
-		im = pt.ax.imshow(M, cmap="coolwarm")
+		im = pt.ax.imshow(M, cmap=kwargs.get("cmap", "coolwarm"))
 
 		for i in range(len(M)):
 		    for j in range(len(M)):
-		        text = pt.ax.text(j, i, format(M[i, j], '.2f'), ha="center", va="center", color="w")
+		    	v = M[i, j]	
+		    	color = "k"
+		    	if v>center:
+		    		color = "w"
+
+		    	text = pt.ax.text(j, i, format(v, '.2f'), ha="center", va="center", color=color)
 
 		pt.ax.set_xticks(np.arange(len(M)))
 		pt.ax.set_yticks(np.arange(len(M)))
 		pt.ax.set_xticklabels(csv.header)
 		pt.ax.set_yticklabels(csv.header)
+		pt.ax.set_title(kwargs.get("title", ""))
 		plt.setp(pt.ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
 		pt.finalize(kwargs)

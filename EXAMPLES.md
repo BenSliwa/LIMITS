@@ -19,6 +19,8 @@ The considered examples are based on scientific analyses which have been carried
 - [Artificial Neural Network Sweet Spot Determination](#artificial-neural-network-sweet-spot-determination)
 - [Random Forest Sweet Spot Determination](#random-forest-sweet-spot-determination)
 - [Model Convergence Analysis](#model-convergence-analysis)
+- [Multi Regression](#multi-regression)
+
 
 ##### Feature Importance
 - [Feature Correlation Analysis](#feature-correlation-analysis)
@@ -47,17 +49,16 @@ e = Experiment(training, "example_experiment")
 e.regression(models, 10)
 ```
 
-For each of the 10 cross validation runs, temporary data is stored in the */tmp/* folder.
 
 ```python
-files = ["tmp/cv_" + str(i) + ".csv" for i in range(len(models))]
+files = [e.path("cv_" + str(i) + ".csv") for i in range(len(models))]
 fig, axs = plt.subplots(2,2)
 fig.set_size_inches(8, 5)
-xticks = ["ANN", "M5", "Random Forest", "SVM"]
+xticks = [model.modelName for model in models]
 ResultVisualizer().boxplots(files, "r2", xticks,  ylabel='R2', fig=fig, ax=axs[0][0], show=False)
 ResultVisualizer().boxplots(files, "mae", xticks,  ylabel='MAE [MBit/s]', fig=fig, ax=axs[0][1], show=False)
 ResultVisualizer().boxplots(files, "rmse", xticks,  ylabel='RMSE [MBit/s]', fig=fig, ax=axs[1][0], show=False)
-ResultVisualizer().boxplots(files, "training", xticks,  ylabel='Training Time [s]', fig=fig, ax=axs[1][1], savePNG="results/" + e.id + "/"+'example_experiment.png')
+ResultVisualizer().boxplots(files, "training", xticks,  ylabel='Training Time [s]', fig=fig, ax=axs[1][1], savePNG=e.path("example_experiment.png"))
 ```
 
 ![example_experiment](misc/example_experiment.png)
@@ -71,17 +72,8 @@ For each cross validation run, a prediction model is learned and a *C++* impleme
 
 ```python
 ce = CodeEvaluator()
-R = ResultMatrix()
-for i in range(10):
-	codeFile = resultFolder + "rf_disc.cpp"
-	data = "\n".join(FileHandler().read("tmp/raw0_" + str(i) + ".txt"))
-	model.exportCode(data, csv, attributes, codeFile)
-
-	resultFile = resultFolder + "scatter_" + str(i) + ".txt"
-	keys, res, conf = ce.regression(codeFile, csv.findAttributes(0), "tmp/test_mnoA_" + str(i) + ".csv", resultFile)
-	R.add(keys, res)
-
-ResultVisualizer().scatter([resultFolder + "scatter_" + str(i) + ".txt" for i in range(10)], "prediction", "label", xlabel='Predicted Data Rate [MBit/s]', ylabel='Measured Data Rate [MBit/s', savePNG=resultFolder+'example_model_reapplication.png')
+R, C = ce.crossValidation(model, training, attributes, e.tmp())
+ResultVisualizer().scatter([e.tmp()+"predictions_"+str(i)+".csv" for i in range(10)], "prediction", "label", xlabel='Predicted Data Rate [MBit/s]', ylabel='Measured Data Rate [MBit/s', savePNG=e.path("example_model_reapplication.png"))
 ```
 
 ![example_correlation](misc/example_model_reapplication.png)
@@ -106,23 +98,35 @@ ResultVisualizer().scatter([resultFolder + "scatter_" + str(i) + ".txt" for i in
 
 
 
-
-
-
-
-
 ### Model Convergence Analysis
 
 [[Complete source code of the example]](src/example_model_convergence.py)
 
 ```python
-resultFile = "tmp/convergence_rf.txt"
-ConvergenceAnalysis().run("../examples/mnoA.csv", M5(), 100, resultFile)
-ResultVisualizer().errorbars([resultFile], "r2")
+e = ConvergenceAnalysis("example_model_convergence")
+e.run("../examples/mnoA.csv", RandomForest(), 100, e.resultFolder+"convergence_rf.txt")
+ResultVisualizer().errorbars([e.resultFolder+"convergence_rf.txt"], "rmse", xlabel='Number of Training Samples', ylabel='RMSE', savePNG=e.resultFolder+'example_model_convergence.png')
 ```
 
 ![example_model_convergence](misc/example_model_convergence.png)
 
+
+### Multi Regression
+
+[[Complete source code of the example]](src/example_multi_regression.py)
+
+```python
+m = MultiExperiment("example_multi_regression")
+m.run(model, [t0, t1, t2])
+```
+
+```python
+resultFolder = "results/example_multi_regression/"
+files = [resultFolder + x + ".csv" for x in ["mae", "rmse", "r2"]]
+ResultVisualizer().colormaps(1, 3, files, ["MAE", "RMSE", "R2"], **{"cmap":"Blues", "xlabel":"Test", "ylabel":"Training"})
+```
+
+![example_multi_regression](misc/example_multi_regression.png)
 
 
 ## Feature Analysis
@@ -158,14 +162,14 @@ ResultVisualizer().colorMap(resultFile, savePNG=resultFolder+'example_correlatio
 [[Complete source code of the example]](src/example_rf_mdi.py)
 
 ```python
-M = CSV("tmp/features_0.csv").toMatrix()
+M = CSV(e.path("features_0.csv")).toMatrix()
 M.normalizeRows()
 M.sortByMean()
-M.save("tmp/rf_features.csv")
+M.save(e.path("rf_features.csv"))
 ```
 
 ```python
-ResultVisualizer().barchart("tmp/rf_features.csv", xlabel="Feature", ylabel="Relative Feature Importance", savePNG=e.id+".png")
+ResultVisualizer().barchart(e.path("rf_features.csv"), xlabel="Feature", ylabel="Relative Feature Importance", savePNG=e.path(e.id+".png"))
 ```
 
 ![example_rf_mdi](misc/example_rf_mdi.png)
@@ -184,10 +188,11 @@ ResultVisualizer().barchart("tmp/rf_features.csv", xlabel="Feature", ylabel="Rel
 [[Complete source code of the example]](src/example_feature_reduction.py)
 
 ```python
-M = CSV("tmp/features_0.csv").toMatrix()
+M = CSV(e.path("features_0.csv")).toMatrix()
 M.normalizeRows()
 M.sortByMean()
 ```
+
 ```python
 for i in range(len(M.header)-1):
 	key = M.header[-1]
@@ -210,18 +215,11 @@ for i in range(len(M.header)-1):
 [[Complete source code of the example]](src/example_ann_visualization.py)
 
 ```python
-training = "../examples/mnoA.csv"
-model = ANN()
-model.hiddenLayers = [10, 10]
-
-e = Experiment(training, "example_ann")
+e = Experiment(training, "example_ann_visualization")
 e.regression([model], 10)
-```
 
-```python
-data = "\n".join(FileHandler().read("tmp/raw0_0.txt"))
-annModel = model.generateClassificationModel(data, csv.findAttributes(0), model.hiddenLayers, training)
-annModel.exportEps('ann_vis.eps')
+CodeGenerator().export(training, model, e.path("ann.cpp"))
+model.exportEps(e.path("ann_vis.eps"))
 ```
 
 ![example_rf_visualization](misc/example_ann_visualization.png)
@@ -236,19 +234,15 @@ annModel.exportEps('ann_vis.eps')
 ```python
 training = "../examples/vehicleClassification.csv"
 model = RandomForest()
-model.depth = 7
+model.config.depth = 7
 
 e = Experiment(training, "example_rf")
 e.classification([model], 10)
-rf.exportEps(model.depth+1, 10, 10, len(attributes)-1)
 ```
 
 ```python
-attributes = csv.findAttributes(0)
-
-data = "\n".join(FileHandler().read("tmp/raw0_0.txt"))
-rf = model.generateModel(data, attributes)
-rf.exportEps(model.depth+1, 10, 10, len(attributes)-1)
+RandomForest_WEKA(model).initModel(data, attributes)
+model.exportEps(model.depth+1, 10, 10, len(attributes)-1)
 ```
 
 ![example_rf_visualization](misc/example_rf_visualization.png)

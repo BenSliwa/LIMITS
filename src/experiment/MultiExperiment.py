@@ -13,33 +13,38 @@ class MultiExperiment:
 
 		FileHandler().createFolder("results")
 		FileHandler().createFolder("results/" + self.id)
+		FileHandler().createFolder("results/" + self.id + "/tmp")
 		FileHandler().clearFolder(self.id)
 
 
 	def run(self, _model, _files):
 		R = {}
 		l = len(_files)
+		folds = 10
 		for y in range(l):
 			training = _files[y]
 			for x in range(l):
+				cfg = Configuration(training, _model, folds)
+				cfg.resultFolder = "results/" + self.id + "/"
+				cfg.tmpFolder = cfg.resultFolder + "tmp/"
+
 				test = _files[x]
-
-				folds = 10
-				csvA = CSV()			
-				csvA.load(training)
+				
+				csvA = CSV(training)	
 				csvA.randomize(self.seed)
-				csvA.createFolds(folds)		
+				csvA.createFolds(folds, cfg.tmpFolder)		
 
-				csvB = CSV()
-				csvB.load(test)
+				csvB = CSV(test)
 				csvB.randomize(self.seed)
-				csvB.createFolds(folds)		
+				csvB.createFolds(folds, cfg.tmpFolder)		
 
-				cv = CrossValidation(Configuration(training, _model, folds))
+				cv = CrossValidation(cfg)
 				cv.model = _model
 				cv.folds = folds
 
+				cv.id = str(y) + "_" + str(x)
 				r = cv.run(csvA.id, csvB.id)
+
 				results = np.hstack([r.data.mean(0), r.data.std(0)])		# TUDO: mean only if size>1 !
 
 				# init the result matrices

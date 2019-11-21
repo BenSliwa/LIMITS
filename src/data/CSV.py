@@ -44,7 +44,7 @@ class CSV:
 		random.Random(_seed).shuffle(self.data)
 
 
-	def stratify(self, _folds):
+	def stratify(self, _folds, _folder):
 		labels = self.getColumn(1)
 		data = [];
 		for i in range(0, _folds):
@@ -67,7 +67,7 @@ class CSV:
 				data[i].data += lines[0:s]
 				lines = lines[s:]
 
-		self.exportFoldData(data)
+		self.exportFoldData(data, _folder)
 
 
 	def addIndices(self):
@@ -75,7 +75,7 @@ class CSV:
 			self.data[i] = str(i) + "," + self.data[i] 
 
 		
-	def createFolds(self, _folds):
+	def createFolds(self, _folds, _folder):
 		foldSize = math.ceil(len(self.data) / _folds)
 		data = self.data
 		folds = [];
@@ -86,10 +86,10 @@ class CSV:
 			csv.data = data[0:s]
 			data = data[s:]
 			folds.append(csv)
-		self.exportFoldData(folds)
+		self.exportFoldData(folds, _folder)
 
 
-	def exportFoldData(self, _folds):
+	def exportFoldData(self, _folds, _folder):
 		fh = FileHandler()
 		folds = len(_folds)
 
@@ -99,12 +99,12 @@ class CSV:
 			subset = _folds[i]
 			subsetIndices = subset.removeIndices()
 			indices += subsetIndices
-		fh.write("\n".join(indices), "tmp/indices_" + self.id + ".csv")
+		fh.write("\n".join(indices), _folder + "indices_" + self.id + ".csv")
 
 		# generate the fold data
 		for i in range(0, folds):
-			train = "tmp/training_" + self.id + "_" + str(i) + ".csv"
-			test = "tmp/test_" + self.id + "_" + str(i) + ".csv"
+			train = _folder + "training_" + self.id + "_" + str(i) + ".csv"
+			test = _folder + "test_" + self.id + "_" + str(i) + ".csv"
 
 			fh.write(",".join(self.header) + "\n", train)
 			fh.write(",".join(self.header) + "\n", test)
@@ -122,12 +122,12 @@ class CSV:
 		attributes = self.findAttributes(1)
 		for i in range(0, folds):
 			train = CSV();
-			train.load("tmp/training_" + self.id + "_" + str(i) + ".csv")			
+			train.load(_folder + "training_" + self.id + "_" + str(i) + ".csv")			
 			test = CSV();
-			test.load("tmp/test_" + self.id + "_" + str(i) + ".csv")
+			test.load(_folder + "test_" + self.id + "_" + str(i) + ".csv")
 
-			fh.write(arff.serialize(attributes, train.data), "tmp/training_" + self.id + "_" + str(i) + ".arff")
-			fh.write(arff.serialize(attributes, test.data), "tmp/test_" + self.id + "_" + str(i) + ".arff")
+			fh.write(arff.serialize(attributes, train.data), _folder + "training_" + self.id + "_" + str(i) + ".arff")
+			fh.write(arff.serialize(attributes, test.data), _folder + "test_" + self.id + "_" + str(i) + ".arff")
 
 
 	def convertToARFF(self, _file, _removeIndices=True):		

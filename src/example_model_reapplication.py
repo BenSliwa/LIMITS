@@ -1,6 +1,6 @@
 from plot.ResultVisualizer import ResultVisualizer
 from data.CSV import CSV
-from weka.models.RandomForest import RandomForest
+from models.randomforest.RandomForest import RandomForest
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
 from code.CodeEvaluator import CodeEvaluator
@@ -11,8 +11,8 @@ from data.ResultMatrix import ResultMatrix
 # define the training data set and set up the model
 training = "../examples/mnoA.csv"
 model = RandomForest()
-model.trees = 10
-model.depth = 10
+model.config.trees = 10
+model.config.depth = 10
 
 csv = CSV(training)
 attributes = csv.findAttributes(0)
@@ -20,12 +20,11 @@ attributes = csv.findAttributes(0)
 # perform a 10-fold cross validation
 e = Experiment(training, "example_model_reapplication")
 e.regression([model], 10)
-resultFolder = "results/" + e.id + "/"
 
 #
 ce = CodeEvaluator()
-R, C = ce.crossValidation(model, training, attributes)
+R, C = ce.crossValidation(model, training, attributes, e.tmp())
 R.printAggregated()
 
 #
-ResultVisualizer().scatter(["tmp/predictions_" + str(i) + ".csv" for i in range(10)], "prediction", "label", xlabel='Predicted Data Rate [MBit/s]', ylabel='Measured Data Rate [MBit/s', savePNG=resultFolder+'example_model_reapplication.png')
+ResultVisualizer().scatter([e.tmp()+"predictions_"+str(i)+".csv" for i in range(10)], "prediction", "label", xlabel='Predicted Data Rate [MBit/s]', ylabel='Measured Data Rate [MBit/s', savePNG=e.path("example_model_reapplication.png"))

@@ -1,7 +1,7 @@
-from weka.models.ANN import ANN
+from models.ann.ANN import ANN
+from weka.models.ANN import ANN as ANN_WEKA
 from experiment.Experiment import Experiment
 from code.CodeGenerator import CodeGenerator
-from code.ANN_Model import ANN_Model
 from data.CSV import CSV
 from data.FileHandler import FileHandler
 from data.ResultMatrix import ResultMatrix
@@ -22,15 +22,15 @@ csv = CSV(training)
 attributes = csv.findAttributes(0)
 
 for i in range(10):
-	training = "tmp/training_mnoA_" + str(i) + ".csv"
-	data = "\n".join(FileHandler().read("tmp/raw0_" + str(i) + ".txt"))
+	training = e.tmp() + "training_mnoA_" + str(i) + ".csv"
+	data = "\n".join(FileHandler().read(e.tmp() + "raw0_" + str(i) + ".txt"))
 
-	ann = model.buildAbstractModel(data, csv, attributes, training)
-	M.add(csv.header[1:], ann.computeInputLayerRanking())
+	ANN_WEKA(model).initModel(data, csv, attributes, training)
+	M.add(csv.header[1:], model.computeInputLayerRanking())
 M.normalizeRows()
 M.sortByMean()
-M.save("tmp/ann_features.csv")
+M.save(e.path("ann_features.csv"))
 
 #
-ResultVisualizer().barchart("tmp/ann_features.csv", xlabel="Feature", ylabel="Relative Feature Importance", savePNG=e.id+".png")
+ResultVisualizer().barchart(e.path("ann_features.csv"), xlabel="Feature", ylabel="Relative Feature Importance", savePNG=e.path(e.id+".png"))
 

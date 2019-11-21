@@ -1,4 +1,4 @@
-from weka.models.RandomForest import RandomForest
+from models.randomforest.RandomForest import RandomForest
 from code.CodeGenerator import CodeGenerator
 from code.MSP430 import MSP430
 from code.ESP32 import ESP32
@@ -19,7 +19,7 @@ def computeMemorySize(_training, _model, _regression):
 	lAtt = len(csv.findAttributes(0))-1
 	
 	codeFile = "example_rf_sweet_spot.cpp"
-	CodeGenerator().export(_training, _model, "codeFile", codeFile)
+	CodeGenerator().export(_training, _model, codeFile)
 	
 	if _regression==True:
 		resultType = "float"
@@ -41,8 +41,8 @@ def regressionRF(_training, _trees, _depth, _file):
 	for numTrees in range(1,_trees+1):
 		for depth in range(1,_depth+1):
 			rf = RandomForest()
-			rf.trees = numTrees
-			rf.depth = depth
+			rf.config.trees = numTrees
+			rf.config.depth = depth
 
 			header, result = e.regression([rf], 10)
 			mem = computeMemorySize(_training, rf, True)
@@ -75,8 +75,9 @@ def plotSweetSpot(_file, _sX, _sY):
 	plt.show()
 
 #
+e = Experiment("", "example_rf_sweet_spot")
 trees = 30
 depth = 15
-resultFile = "tmp/rf_regression_mem.csv"
+resultFile = e.path("rf_regression_mem.csv")
 regressionRF("../examples/mnoA.csv", trees, depth, resultFile)
 plotSweetSpot(resultFile, trees, depth)
