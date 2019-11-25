@@ -2,7 +2,7 @@ LIMITS: LIghtweight Machine learning for IoT Systems
 ========
 **Preliminary Beta Version**
 
-**LIMITS** is python-based open source framework for automating *high-level* machine learning tasks targeted at resource-constrained IoT platforms. The *low-level* trainining of the models is performed by the coupled **WEKA** framework. *LIMITS* parses the *WEKA* outputs and derives an abstract model representation which is utilized for *C/C++* code generation. Moreover, *LIMITS* can explicitly integrate the compilation toolchain of the targeted IoT platform in order to derive accurate assessments of the required memory resources for deploying the model to the considered platform.
+**LIMITS** is a python-based open source framework for automating *high-level* machine learning tasks targeted at resource-constrained IoT platforms. The *low-level* trainining of the models is performed by the coupled **WEKA** framework. *LIMITS* parses the *WEKA* outputs and derives an abstract model representation which is utilized for *C/C++* code generation. Moreover, *LIMITS* can explicitly integrate the compilation toolchain of the targeted IoT platform in order to derive accurate assessments of the required memory resources for deploying the model to the considered platform.
 
 - [**SETUP INSTRUCTIONS**](INSTALL.md)
 - [**EXAMPLE APPLICATIONS**](EXAMPLES.md)
